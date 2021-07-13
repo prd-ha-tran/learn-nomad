@@ -1,0 +1,134 @@
+version: '3.7'
+
+x-logging: &logging
+  driver: loki
+  options:
+    loki-url: 'http://localhost:3100/api/prom/push'
+
+services:
+
+  consul-server1:
+    image: hashicorp/consul:1.10.0
+    container_name: consul-server1
+    restart: always
+    volumes:
+     - ./consul/servers/server1.json:/consul/config/server1.json:ro
+     - ./consul/certs/:/consul/config/certs/:ro
+    networks:
+      - vpcbr
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    command: "agent -bootstrap-expect=3"
+
+  consul-server2:
+    image: hashicorp/consul:1.10.0
+    container_name: consul-server2
+    restart: always
+    volumes:
+     - ./consul/servers/server2.json:/consul/config/server2.json:ro
+     - ./consul/certs/:/consul/config/certs/:ro
+    networks:
+      - vpcbr
+    command: "agent -bootstrap-expect=3"
+
+  consul-server3:
+    image: hashicorp/consul:1.10.0
+    container_name: consul-server3
+    restart: always
+    volumes:
+     - ./consul/servers/server3.json:/consul/config/server3.json:ro
+     - ./consul/certs/:/consul/config/certs/:ro
+    networks:
+      - vpcbr
+    command: "agent -bootstrap-expect=3"
+
+  nomad-server1:
+    build: ./nomad
+    image: consul-nomad:1.10.0-1.1.2
+    container_name: nomad-server1
+    restart: always
+    volumes:
+      - ./consul/clients/client1.json:/consul/config/client.json:ro
+      - ./consul/certs/:/consul/config/certs/:ro
+      - ./nomad/servers/server1.hcl:/nomad/config/server.hcl:ro
+      - ./nomad/certs/:/nomad/config/certs/:ro
+    ports:
+        - "4646:4646"
+        - "4648:4648/tcp"
+        - "4648:4648/udp"
+        - "4647:4647/tcp"
+        - "4647:4647/udp"
+    networks:
+      - vpcbr
+    command: "agent -bootstrap-expect=3"
+
+  nomad-server2:
+    build: ./nomad
+    image: consul-nomad:1.10.0-1.1.2
+    container_name: nomad-server2
+    restart: always
+    volumes:
+      - ./consul/clients/client2.json:/consul/config/client.json:ro
+      - ./consul/certs/:/consul/config/certs/:ro
+      - ./nomad/servers/server1.hcl:/nomad/config/server.hcl:ro
+      - ./nomad/certs/:/nomad/config/certs/:ro
+    networks:
+      - vpcbr
+    command: "agent -bootstrap-expect=3"
+
+  nomad-server3:
+    build: ./nomad
+    image: consul-nomad:1.10.0-1.1.2
+    container_name: nomad-server3
+    restart: always
+    volumes:
+      - ./consul/clients/client3.json:/consul/config/client.json:ro
+      - ./consul/certs/:/consul/config/certs/:ro
+      - ./nomad/servers/server1.hcl:/nomad/config/server.hcl:ro
+      - ./nomad/certs/:/nomad/config/certs/:ro
+    networks:
+      - vpcbr
+    command: "agent -bootstrap-expect=3"
+
+  tempo:
+    image: grafana/tempo:1f1c40b3
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml
+    networks:
+      - vpcbr
+    ports:
+      - "14268:14268" # jaeger ingest
+      - "3100"  # tempo
+      - "9411:9411" #zipkin
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  loki:
+    image: grafana/loki:2.1.0
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - vpcbr
+    ports:
+      - "3100:3100"                                   # loki needs to be exposed so it receives logs
+    environment:
+      - JAEGER_AGENT_HOST=tempo
+      - JAEGER_ENDPOINT=http://tempo:14268/api/traces # send traces to Tempo
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
+    logging:
+      <<: *logging
+
+networks:
+  vpcbr:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 10.5.0.0/16
+
