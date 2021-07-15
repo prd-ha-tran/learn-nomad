@@ -40,9 +40,7 @@ RUN mkdir -p /nomad/data && \
 
 VOLUME /nomad/data
 
-EXPOSE 4646
-
-EXPOSE 4647 4647/udp 4648 4648/udp
+EXPOSE 4646 4647 4647/udp 4648 4648/udp
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]

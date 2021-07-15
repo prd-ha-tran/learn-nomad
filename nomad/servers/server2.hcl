@@ -4,7 +4,7 @@ data_dir = "/nomad/data"
 
 log_level = "INFO"
 
-name = "nomad-server1"
+name = "nomad-server2"
 
 server {
   enabled = true

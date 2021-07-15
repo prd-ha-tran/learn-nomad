@@ -23,6 +23,9 @@
         "enabled": true,
         "default_policy": "deny",
         "down_policy": "extend-cache",
-        "enable_token_persistence": true
+        "enable_token_persistence": true,
+        "tokens": {
+            "default": "46fa4563-157a-8531-a1b5-eb98924e7079"
+        }
     }
 }

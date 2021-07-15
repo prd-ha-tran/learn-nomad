@@ -56,10 +56,6 @@ services:
       - ./nomad/certs/:/nomad/config/certs/:ro
     ports:
         - "4646:4646"
-        - "4648:4648/tcp"
-        - "4648:4648/udp"
-        - "4647:4647/tcp"
-        - "4647:4647/udp"
     networks:
       - vpcbr
     command: "agent -bootstrap-expect=3"
@@ -72,7 +68,7 @@ services:
     volumes:
       - ./consul/clients/client2.json:/consul/config/client.json:ro
       - ./consul/certs/:/consul/config/certs/:ro
-      - ./nomad/servers/server1.hcl:/nomad/config/server.hcl:ro
+      - ./nomad/servers/server2.hcl:/nomad/config/server.hcl:ro
       - ./nomad/certs/:/nomad/config/certs/:ro
     networks:
       - vpcbr
@@ -86,14 +82,14 @@ services:
     volumes:
       - ./consul/clients/client3.json:/consul/config/client.json:ro
       - ./consul/certs/:/consul/config/certs/:ro
-      - ./nomad/servers/server1.hcl:/nomad/config/server.hcl:ro
+      - ./nomad/servers/server3.hcl:/nomad/config/server.hcl:ro
       - ./nomad/certs/:/nomad/config/certs/:ro
     networks:
       - vpcbr
     command: "agent -bootstrap-expect=3"
 
   tempo:
-    image: grafana/tempo:1f1c40b3
+    image: grafana/tempo:latest
     container_name: tempo
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
@@ -103,7 +99,7 @@ services:
     ports:
       - "14268:14268" # jaeger ingest
       - "3100"  # tempo
-      - "9411:9411" #zipkin
+      - "9411:9411" # zipkin
     logging:
       driver: loki
       options:
